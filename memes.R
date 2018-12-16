@@ -14,9 +14,11 @@ combined_meme_data <- meme_data %>%
 View(combined_meme_data)
 
 combined_averages <- combined_meme_data %>%
-  group_by(week) %>%
+  group_by(week, group_assignment) %>%
   summarise(N = n(),
             ave_polarity = mean(total_polarity), na.rm = TRUE)
+
+View(combined_averages)
 
 #ggplot(combined_averages, aes(x = week, y = ave_polarity)) +
 #  geom_bar(stat = "identity", position = "dodge")
@@ -50,10 +52,10 @@ ggplot(normie_group_averages, aes(x = week, y = ave_polarity)) +
   geom_bar(stat = "identity", position = "dodge")
 
 ###THIS IS WHERE EVERYTHING GETS SEPARATED AND PLACED INTO A SINGLE CHART###
-grouped_averages <- combined_meme_data %>%
+grouped_data <- combined_meme_data %>%
   mutate(group_label = ifelse(group_assignment > 0, "dank", "normie"))
 
-grouped_averages <- grouped_averages %>%
+grouped_averages <- grouped_data %>%
   group_by(group_label, week) %>%
   summarise(N = n(),
             ave_polarity = mean(total_polarity))
@@ -62,4 +64,5 @@ View(grouped_averages)
 
 ggplot(grouped_averages, aes(x = week, y = ave_polarity, fill = group_label)) +
   geom_bar(stat = "identity", position = "dodge")
+
   
