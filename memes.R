@@ -2,17 +2,33 @@ library(tidyverse)
 library(cowplot)
 
 meme_data <- read.csv("meme_experiment_data.csv")
+meme_data[is.na(meme_data)] <- 0
+
 summary(meme_data)
 View(meme_data)
 
+ggplot(meme_data, aes(x = preexperiment_polarization)) +
+  geom_density()
+
 #table(meme_data$subjects, meme_data$group_assignment)
 
-meme_data[is.na(meme_data)] <- 0
 combined_meme_data <- meme_data %>%
   mutate(total_polarity = preexperiment_polarization + experiment_polarization + postexperiment_polarization)
 
 View(combined_meme_data)
 
+###DENSITY PLOTS BY TIME###
+time_groups <- combined_meme_data %>%
+  mutate(time_label = ifelse(preexperiment_polarization > 0, "pre_experiment",
+         ifelse(experiment_polarization > 0, "during_experiment",
+         ifelse(postexperiment_polarization > 0, "post_experiment", "none"))))
+
+View(time_groups)
+
+ggplot(time_groups, aes(x = total_polarity, color = time_label, fill = time_label)) +
+  geom_density(alpha = 0.3)
+
+###COMBINING AVERAGES###
 combined_averages <- combined_meme_data %>%
   group_by(week, group_assignment) %>%
   summarise(N = n(),
@@ -20,8 +36,6 @@ combined_averages <- combined_meme_data %>%
 
 View(combined_averages)
 
-#ggplot(combined_averages, aes(x = week, y = ave_polarity)) +
-#  geom_bar(stat = "identity", position = "dodge")
 
 ###LOOKING AT EACH GROUP SEPARATELY###
 dank_group <- combined_meme_data %>%
