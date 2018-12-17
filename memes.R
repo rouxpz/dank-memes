@@ -8,7 +8,13 @@ summary(meme_data)
 View(meme_data)
 
 ###HISTOGRAM FOR AGES###
-ggplot(meme_data, aes(x = age)) +
+age_data <- meme_data %>%
+  group_by(subjects, age) %>%
+  summarise(N = n())
+
+View(age_data)
+
+ggplot(age_data, aes(x = age)) +
   geom_histogram(binwidth = 1, color = "#1c0f4c", fill = "#5e32ff")
 
 #table(meme_data$subjects, meme_data$group_assignment)
