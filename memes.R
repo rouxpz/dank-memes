@@ -7,8 +7,9 @@ meme_data[is.na(meme_data)] <- 0
 summary(meme_data)
 View(meme_data)
 
-ggplot(meme_data, aes(x = preexperiment_polarization)) +
-  geom_density()
+###HISTOGRAM FOR AGES###
+ggplot(meme_data, aes(x = age)) +
+  geom_histogram(binwidth = 1, color = "#1c0f4c", fill = "#5e32ff")
 
 #table(meme_data$subjects, meme_data$group_assignment)
 
@@ -16,6 +17,10 @@ combined_meme_data <- meme_data %>%
   mutate(total_polarity = preexperiment_polarization + experiment_polarization + postexperiment_polarization)
 
 View(combined_meme_data)
+
+###SINGLE DENSITY PLOT FOR ALL POLARITIES###
+ggplot(combined_meme_data, aes(x = total_polarity)) +
+  geom_density(color = "#199790", fill = "#199790", alpha = 0.4)
 
 ###DENSITY PLOTS BY TIME###
 time_groups <- combined_meme_data %>%
@@ -26,6 +31,18 @@ time_groups <- combined_meme_data %>%
 View(time_groups)
 
 ggplot(time_groups, aes(x = total_polarity, color = time_label, fill = time_label)) +
+  geom_density(alpha = 0.3)
+
+dank_time_group <- time_groups %>%
+  filter(group_assignment == 1)
+
+ggplot(dank_time_group, aes(x = total_polarity, color = time_label, fill = time_label)) +
+  geom_density(alpha = 0.3)
+
+normie_time_group <- time_groups %>%
+  filter(group_assignment == 0)
+
+ggplot(normie_time_group, aes(x = total_polarity, color = time_label, fill = time_label)) +
   geom_density(alpha = 0.3)
 
 ###COMBINING AVERAGES###
@@ -65,7 +82,7 @@ normie_group_averages <- normie_group %>%
 ggplot(normie_group_averages, aes(x = week, y = ave_polarity)) +
   geom_bar(stat = "identity", position = "dodge")
 
-###THIS IS WHERE EVERYTHING GETS SEPARATED AND PLACED INTO A SINGLE CHART###
+###THIS IS WHERE EVERYTHING GETS PLACED INTO A SINGLE CHART###
 grouped_data <- combined_meme_data %>%
   mutate(group_label = ifelse(group_assignment > 0, "dank", "normie"))
 
