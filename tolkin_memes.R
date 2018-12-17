@@ -40,6 +40,7 @@ experiment_means <- data[data$group_assignment == 1,] %>%
                    week_sd = sd(current_polarization),
                    ci = 1.96 * week_sd/sqrt(N))
 
+
 p <- ggplot(during, aes(x=week, y=current_polarization))
 p <- p + geom_ribbon(data = control_means, aes(x = week, ymin = week_mean - week_sd, 
                                                ymax = week_mean + week_sd), 
@@ -59,8 +60,17 @@ p <- p + geom_vline(xintercept=3, linetype = "dashed") +
   geom_vline(xintercept=15, linetype = "dashed") +
   geom_text(data=data.frame(x=14.5,y=0.55), aes(x, y), hjust = 1,
             label="End of Experiment")
-  
-p <- p + ggtitle("Average Weekly Polarization")  
+
+# add title + axis titles
+p <- p + ggtitle("Average Weekly Polarization") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "Week", y = "Polarization")
+
+# add legend
+p <- p + 
+  scale_color_manual(name="", values = c("red","red")) +
+  scale_fill_manual(name="", values=c("white","red"))
+
 
 p
 
