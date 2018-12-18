@@ -15,7 +15,7 @@ age_data <- meme_data %>%
 View(age_data)
 
 ggplot(age_data, aes(x = age)) +
-  geom_histogram(binwidth = 1, color = "#1c0f4c", fill = "#5e32ff")
+  geom_histogram(binwidth = 1, color = "#1c0f4c", fill = "#5e32ff", alpha = 0.4)
 
 #table(meme_data$subjects, meme_data$group_assignment)
 
@@ -26,7 +26,9 @@ View(combined_meme_data)
 
 ###SINGLE DENSITY PLOT FOR ALL POLARITIES###
 ggplot(combined_meme_data, aes(x = total_polarity)) +
-  geom_density(color = "#199790", fill = "#199790", alpha = 0.4)
+  #geom_density(color = "#199790", fill = "#199790", alpha = 0.4)
+  geom_histogram(color = "#199790", fill = "#199790", alpha = 0.4) +
+  stat_function(fun = dnorm, color = "red", arg = list(mean = mean(combined_meme_data$total_polarity, na.rm = TRUE), sd = sd(combined_meme_data$total_polarity, na.rm = TRUE)))
 
 ###DENSITY PLOTS BY TIME###
 time_groups <- combined_meme_data %>%
@@ -49,7 +51,8 @@ normie_time_group <- time_groups %>%
   filter(group_assignment == 0)
 
 ggplot(normie_time_group, aes(x = total_polarity, color = time_label, fill = time_label)) +
-  geom_density(alpha = 0.3)
+  geom_density(alpha = 0.3) +
+  xlim(0.0, 1.0)
 
 ###COMBINING AVERAGES###
 combined_averages <- combined_meme_data %>%
