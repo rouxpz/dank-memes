@@ -1,5 +1,6 @@
 library(tidyverse)
 library(cowplot)
+library(reshape2)
 
 meme_data <- read.csv("meme_experiment_data.csv")
 meme_data[is.na(meme_data)] <- 0
@@ -98,11 +99,70 @@ grouped_data <- combined_meme_data %>%
 grouped_averages <- grouped_data %>%
   group_by(group_label, week) %>%
   summarise(N = n(),
-            ave_polarity = mean(total_polarity))
+            ave_polarity = mean(total_polarity),
+            sd_polarity = sd(total_polarity))
+
+grouped_averages <- grouped_averages %>%
+  mutate(upper_int = ave_polarity + 1.282 * sd_polarity,
+         lower_int = ave_polarity - 1.282 * sd_polarity)
 
 View(grouped_averages)
 
 ggplot(grouped_averages, aes(x = week, y = ave_polarity, fill = group_label)) +
-  geom_bar(stat = "identity", position = "dodge")
+  #geom_bar(stat = "identity", position = "dodge")
+  geom_line() +
+  geom_ribbon(aes(x = week, ymax = upper_int, ymin = lower_int), alpha = 0.2)
 
-  
+###AGE AND POLARITY###
+combined_dank_age_data <- combined_meme_data %>%
+  filter(group_assignment == 1) %>%
+  group_by(age, week) %>%
+  summarise(N = n(),
+            ave_polarity = mean(total_polarity))
+
+combined_normie_age_data <- combined_meme_data %>%
+  filter(group_assignment == 0) %>%
+  group_by(age, week) %>%
+  summarise(N = n(),
+            ave_polarity = mean(total_polarity))
+
+combined_dank_age_data$age <- as.factor(combined_dank_age_data$age)
+combined_normie_age_data$age <- as.factor(combined_normie_age_data$age)
+
+View(combined_dank_age_data)
+ggplot(combined_dank_age_data, aes(x = week, y = ave_polarity, group = age, color = age)) +
+  geom_line() +
+  scale_color_discrete() +
+  ylim(0.0, 1.0)
+
+ggplot(combined_normie_age_data, aes(x = week, y = ave_polarity, group = age, color = age)) +
+  geom_line() +
+  scale_color_discrete() +
+  ylim(0.0, 1.0)
+
+##DECLARED PARTISANSHIP AND POLARITY##
+partisanship_dank_data <- combined_meme_data %>%
+  filter(group_assignment == 1) %>%
+  group_by(week, declared_partisanship) %>%
+  summarise(N = n(),
+            ave_polarity = mean(total_polarity))
+
+partisanship_dank_data$declared_partisanship <- as.factor(partisanship_dank_data$declared_partisanship)
+
+ggplot(partisanship_dank_data, aes(x = week, y = ave_polarity, group = declared_partisanship, color = declared_partisanship)) +
+  geom_line() +
+  scale_color_discrete() +
+  ylim(0.0, 1.0)
+
+partisanship_normie_data <- combined_meme_data %>%
+  filter(group_assignment == 0) %>%
+  group_by(week, declared_partisanship) %>%
+  summarise(N = n(),
+            ave_polarity = mean(total_polarity))
+
+partisanship_normie_data$declared_partisanship <- as.factor(partisanship_normie_data$declared_partisanship)
+
+ggplot(partisanship_normie_data, aes(x = week, y = ave_polarity, group = declared_partisanship, color = declared_partisanship)) +
+  geom_line() +
+  scale_color_discrete() +
+  ylim(0.0, 1.0)
