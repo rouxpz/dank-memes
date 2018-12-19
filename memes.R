@@ -27,9 +27,8 @@ View(combined_meme_data)
 
 ###SINGLE DENSITY PLOT FOR ALL POLARITIES###
 ggplot(combined_meme_data, aes(x = total_polarity)) +
-  #geom_density(color = "#199790", fill = "#199790", alpha = 0.4)
-  geom_histogram(color = "#199790", fill = "#199790", alpha = 0.4) +
-  stat_function(fun = dnorm, color = "red", arg = list(mean = mean(combined_meme_data$total_polarity, na.rm = TRUE), sd = sd(combined_meme_data$total_polarity, na.rm = TRUE)))
+  geom_histogram(aes(y = ..density..), color = "black", fill = "white") +
+  geom_density(color = "black", fill = "#199790", alpha = 0.4)
 
 ###DENSITY PLOTS BY TIME###
 time_groups <- combined_meme_data %>%
@@ -46,7 +45,8 @@ dank_time_group <- time_groups %>%
   filter(group_assignment == 1)
 
 ggplot(dank_time_group, aes(x = total_polarity, color = time_label, fill = time_label)) +
-  geom_density(alpha = 0.3)
+  geom_density(alpha = 0.3) +
+  xlim(0.0, 1.0)
 
 normie_time_group <- time_groups %>%
   filter(group_assignment == 0)
@@ -165,4 +165,18 @@ partisanship_normie_data$declared_partisanship <- as.factor(partisanship_normie_
 ggplot(partisanship_normie_data, aes(x = week, y = ave_polarity, group = declared_partisanship, color = declared_partisanship)) +
   geom_line() +
   scale_color_discrete() +
+  ylim(0.0, 1.0)
+
+###MEMES SEEN AND POLARITY SCATTERPLOT###
+memes_seen_data <- combined_meme_data %>%
+  filter(memes_seen > 0)
+  #filter(subjects < 50)
+  #filter(week == 4) %>%
+  #filter(group_assignment == 0)
+
+View(memes_seen_data)
+
+ggplot(memes_seen_data, aes(x = memes_seen, y = total_polarity, color = subjects)) +
+  geom_point() +
+  xlim(0.0, 1.0) +
   ylim(0.0, 1.0)
