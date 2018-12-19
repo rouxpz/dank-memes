@@ -9,9 +9,6 @@ plot(polar_dens)
 
 exp_polar_dens <- density(data$preexperiment_polarization, na.rm = TRUE)
 
-You do over time dank vs not dank with confidence intervals.
-two groups, confidence intervals over time
-
 colnames(data)
 
 # Just take the during experiment data for now
@@ -31,48 +28,50 @@ control_means <- data[data$group_assignment == 0,] %>%
   dplyr::summarise(N = n(),
                    week_mean = mean(current_polarization),
                    week_sd = sd(current_polarization),
-                   ci = 1.96 * week_sd/sqrt(N))
+                   week_ci = 1.96 * week_sd/sqrt(N))
 
 experiment_means <- data[data$group_assignment == 1,] %>% 
   group_by(week) %>%
   dplyr::summarise(N = n(),
                    week_mean = mean(current_polarization),
                    week_sd = sd(current_polarization),
-                   ci = 1.96 * week_sd/sqrt(N))
+                   week_ci = 1.96 * week_sd/sqrt(N))
 
+c_e_means <- data.frame(rbind(control_means, experiment_means))
+c_e_means$control <- c(rep("control", 19), rep("experimental", 19))
 
-p <- ggplot(during, aes(x=week, y=current_polarization))
-p <- p + geom_ribbon(data = control_means, aes(x = week, ymin = week_mean - week_sd, 
-                                               ymax = week_mean + week_sd), 
-                     inherit.aes = FALSE, alpha = 0.5, fill = "blue") +
-  geom_ribbon(data = experiment_means, aes(x = week, ymin = week_mean - week_sd,
-                                           ymax = week_mean + week_sd), 
-              inherit.aes = FALSE, alpha = 0.5, fill = "red")
-
-# add lines
-p <- p + geom_line(data = control_means, aes(x = week, y = week_mean))
-p <- p + geom_line(data = experiment_means, aes(x = week, y = week_mean))
-
-# add marker lines
-p <- p + geom_vline(xintercept=3, linetype = "dashed") +
+plot1 <- ggplot(during, aes(x=week, y=current_polarization)) +
+  # add confidence intervals
+  geom_ribbon(data = c_e_means, aes(x = week, 
+                                    ymin = week_mean - week_ci, 
+                                    ymax = week_mean + week_ci,
+                                    fill = c_e_means$control), 
+                     inherit.aes = FALSE, alpha = 0.5) +
+  # add lines
+  geom_line(data = control_means, aes(x = week, y = week_mean)) +
+  geom_line(data = experiment_means, aes(x = week, y = week_mean)) +
+  # add marker lines
+  geom_vline(xintercept=3, linetype = "dashed") +
   geom_text(data=data.frame(x=3.5,y=0.25), aes(x, y), hjust = 0,
             label="Start of Experiment") +
   geom_vline(xintercept=15, linetype = "dashed") +
   geom_text(data=data.frame(x=14.5,y=0.55), aes(x, y), hjust = 1,
-            label="End of Experiment")
-
-# add title + axis titles
-p <- p + ggtitle("Average Weekly Polarization") + 
+            label="End of Experiment") +
+  # add title
+  ggtitle("Average Weekly Polarization") + 
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Week", y = "Polarization")
-
-# add legend
-p <- p + 
-  scale_color_manual(name="", values = c("red","red")) +
-  scale_fill_manual(name="", values=c("white","red"))
+  labs(x = "Week", y = "Polarization of Facebook Posts (0-1)") +
+# rework legend
+  scale_fill_manual("Group", values=c("royalblue", "salmon"))
 
 
-p
+# examine the polarization of posts from subjects pre-experiment
+pre_experiment <- data[data$week %in% c(1,2,3),]
+plot2 <- ggplot(aes(x=current_polarization), data = pre_experiment) + 
+  geom_density(fill="springgreen4") + xlim(c(-0, 0.5))
+
+plot3 <- ggplot(aes(x=current_polarization, fill = group_assignment), 
+                data = pre_experiment) + geom_density()
 
 
 
@@ -135,22 +134,3 @@ p + geom_ribbon(aes(ymin = week_mean-week_sd, ymax = week_mean+week_sd),
             fill="green") +
   geom_line(aes(y=week_mean))
 
-
-
-
-colnames(polarization)$data.group_assignment) 
-
-polarization$mean_polarized <- 
-  summarise(polarization$data.experiment_polarization, stats = "mean")
-
-polarization <- polarization %>% mutate(mean_polar = mean(data.experiment_polarization)) %>%
-  group_by(week)
-
-polarization$mean_polar
-
-polarization$data.experiment_polarization
-
-
-pol <- ggplot(polarization, aes(x=data$week, y=mean(data$experiment_polarization)))
-pol + geom_line()
-pol + geom_ribbon((ymin=experiment_polarization - .1, ymax=experiment_polarization + .1 ))
