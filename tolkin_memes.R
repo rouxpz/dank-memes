@@ -70,8 +70,11 @@ pre_experiment <- data[data$week %in% c(1,2,3),]
 plot2 <- ggplot(aes(x=current_polarization), data = pre_experiment) + 
   geom_density(fill="springgreen4") + xlim(c(-0, 0.5))
 
-plot3 <- ggplot(aes(x=current_polarization, fill = group_assignment), 
-                data = pre_experiment) + geom_density()
+plot3 <- ggplot(pre_experiment, aes(x=current_polarization, 
+                                    fill = group_assignment)) + geom_density()
+
+
+table(pre_experiment$group_assignment)
 
 
 
