@@ -259,16 +259,21 @@ ggplot() +
 
 ###MEMES SEEN AND POLARITY SCATTERPLOT###
 memes_seen_data <- combined_meme_data %>%
+  mutate(memes_seen = memes_seen * 100) %>%
   filter(memes_seen > 0) %>%
   group_by(subjects, group_assignment) %>%
-  filter(group_assignment == 0) %>%
+  filter(group_assignment == 1) %>%
   summarise(N = n(), ave_memes_seen = mean(memes_seen), ave_polarity = mean(total_polarity))
   #filter(subjects < 50)
   #filter(week == 4) %>%
 
 View(memes_seen_data)
 
-ggplot(memes_seen_data, aes(x = ave_memes_seen, y = ave_polarity, color = group_assignment)) +
-  geom_point(alpha = 0.5) +
-  xlim(0.0, 1.0) +
-  ylim(0.0, 1.0)
+ggplot(memes_seen_data, aes(x = ave_memes_seen, y = ave_polarity)) +
+  geom_point(color = "#467ae1", alpha = 0.5) +
+  geom_smooth(method = "lm", se = TRUE, color = "#e15f46") +
+  xlim(50, 100) +
+  ylim(0.5, 1.0) +
+  labs(title = 'Average Post Polarity Per Average Memes Seen: "Dank" Group') +
+  xlab("Average Percentage of Memes Seen") +
+  ylab("Average Post Polarity")
