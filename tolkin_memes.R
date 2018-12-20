@@ -1,36 +1,28 @@
 library(dplyr)
+library(expss)
 
 data <- read.csv("~/Downloads/meme_experiment_data.csv")
 
-colnames(data)
-
-pre_polar_dens <- density(data$preexperiment_polarization, na.rm = TRUE)
-plot(polar_dens)
-
-exp_polar_dens <- density(data$preexperiment_polarization, na.rm = TRUE)
-
-colnames(data)
-
-# Just take the during experiment data for now
-during <- data %>% filter(between(week, 4, 15))
-
-colnames(during)
-during$group_assignment
-
+# recode vars to better stuff
 data$current_polarization <- case_when(
   data$week %in% c(1:3) ~ data$preexperiment_polarization,
   data$week %in% c(4:15) ~ data$experiment_polarization,
   data$week %in% c(16:19) ~ data$postexperiment_polarization
 )
+data$group_assignment <- factor(data$group_assignment, 
+                                labels = c("Control", "Experimental"))
+labels(data, which = c("group_assignment") <- c("Group"))
+data = apply_labels(data, group_assignment = "Group")
 
-control_means <- data[data$group_assignment == 0,] %>% 
+
+control_means <- data[data$group_assignment == "Control",] %>% 
   group_by(week) %>%
   dplyr::summarise(N = n(),
                    week_mean = mean(current_polarization),
                    week_sd = sd(current_polarization),
                    week_ci = 1.96 * week_sd/sqrt(N))
 
-experiment_means <- data[data$group_assignment == 1,] %>% 
+experiment_means <- data[data$group_assignment == "Experimental",] %>% 
   group_by(week) %>%
   dplyr::summarise(N = n(),
                    week_mean = mean(current_polarization),
@@ -38,8 +30,11 @@ experiment_means <- data[data$group_assignment == 1,] %>%
                    week_ci = 1.96 * week_sd/sqrt(N))
 
 c_e_means <- data.frame(rbind(control_means, experiment_means))
-c_e_means$control <- c(rep("control", 19), rep("experimental", 19))
+c_e_means$control <- c(rep("Control", 19), rep("Experimental", 19))
 
+# 
+# Construct plots ----------
+#
 plot1 <- ggplot(during, aes(x=week, y=current_polarization)) +
   # add confidence intervals
   geom_ribbon(data = c_e_means, aes(x = week, 
@@ -60,80 +55,88 @@ plot1 <- ggplot(during, aes(x=week, y=current_polarization)) +
   # add title
   ggtitle("Average Weekly Polarization") + 
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Week", y = "Polarization of Facebook Posts (0-1)") +
+  labs(x = "Week", y = "Polarization of Facebook Posts (0-1)",
+       caption = "Pre-experiment data collected during weeks 1-3
+       The experiment ran during weeks 4-15
+       Post-experiment data was collected during weeks 16-19") +
 # rework legend
-  scale_fill_manual("Group", values=c("royalblue", "salmon"))
-
+  scale_fill_manual("Group", values=c("#F8766D", "#00BFC4"))
 
 # examine the polarization of posts from subjects pre-experiment
-pre_experiment <- data[data$week %in% c(1,2,3),]
-plot2 <- ggplot(aes(x=current_polarization), data = pre_experiment) + 
-  geom_density(fill="springgreen4") + xlim(c(-0, 0.5))
+pre_experiment <- data.frame(data[data$week %in% c(1,2,3),])
+during_experiment <- data.frame(data[data$week %in% range(4:15),])
+post_experiment <- data.frame(data[data$week %in% range(16:19),])
+pre_experiment$Group <- pre_experiment$group_assignment
+during_experiment$Group <- during_experiment$group_assignment
+post_experiment$Group <- post_experiment$group_assignment
 
+
+pre_means <- ddply(pre_experiment, "Group", 
+                   summarise, grp.mean=mean(current_polarization))
+during_means <- ddply(during_experiment, "Group", 
+                      summarise, grp.mean=mean(current_polarization))
+post_means <- ddply(post_experiment, "Group",
+                    summarise, grp.mean=mean(current_polarization))
+
+# pre-experiment density
 plot3 <- ggplot(pre_experiment, aes(x=current_polarization, 
-                                    fill = group_assignment)) + geom_density()
+                                    fill = Group)) + 
+  geom_density(alpha = 0.5) + xlim(c(0, 1)) +
+  # add mean lines
+  geom_vline(data = pre_means, aes(xintercept=grp.mean, 
+                                   color = Group), 
+             linetype="dashed", size=1) +
+  ggtitle("Distribution of Polarization Pre-Experiment") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "Polarization of Facebook Posts (0-1)", 
+       y = "Density") +
+  # use consistent colors with other plots
+  scale_fill_manual(values=c("#F8766D", "#00BFC4"))
 
 
-table(pre_experiment$group_assignment)
+# during experiment density
+plot4 <- ggplot(during_experiment, aes(x=current_polarization, 
+                                    fill = Group)) + 
+  geom_density(alpha = 0.5) + xlim(c(0, 1)) +
+  # add mean lines
+  geom_vline(data = during_means, aes(xintercept=grp.mean, 
+                                   color = Group), 
+             linetype="dashed", size=1) +
+  ggtitle("Distribution of Polarization During Experiment") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "Polarization of Facebook Posts (0-1)", 
+       y = "Density") +
+  # use consistent colors with other plots
+  scale_fill_manual(values=c("#F8766D", "#00BFC4"))
 
 
-
-
-###################
-# STORAGE - REDO WITH ALL WEEKS NOW
-control_means <- during[during$group_assignment == 0,] %>% 
-  group_by(week) %>%
-  dplyr::summarise(N = n(),
-                   week_mean = mean(experiment_polarization),
-                   week_sd = sd(experiment_polarization),
-                   ci = 1.96 * week_sd/sqrt(N))
-
-
-experiment_means <- during[during$group_assignment == 1,] %>% 
-  group_by(week) %>%
-  dplyr::summarise(N = n(),
-            week_mean = mean(experiment_polarization),
-            week_sd = sd(experiment_polarization),
-            ci = 1.96 * week_sd/sqrt(N))
-
-# ok now we want to split experiment and control during the experiment
-p <- ggplot(during, aes(x=week, y=experiment_polarization))
-
-# add confidence intervals
-p <- p + geom_ribbon(data = control_means, aes(x = week, ymin = week_mean - ci, 
-                                          ymax = week_mean + ci), 
-            inherit.aes = FALSE, alpha = 0.5, fill = "blue") +
-  
-  geom_ribbon(data = experiment_means, aes(x = week, ymin = week_mean - ci,
-                                           ymax = week_mean + ci), 
-              inherit.aes = FALSE, alpha = 0.5, fill = "red")
-
-# add lines
-p <- p + geom_line(data = control_means, aes(x = week, y = week_mean))
-p <- p + geom_line(data = experiment_means, aes(x = week, y = week_mean))
-
-p
-# add labels to plot - ask sean tomorrow what you are doing wrong??
-
-# you are going to want to do some funky case_when shit to get these means
-# to line up properly
-
-
-
-p + geom_line(data = control_means, aes(x = week, y = week_mean))
-
-p + geom_ribbon(aes(ymin = week_mean-week_sd, ymax = week_mean+week_sd),
-                alpha=0.3,
-                fill="green") +
-  geom_line(aes(y=week_mean))
+# post experiment density
+plot5 <- ggplot(post_experiment, aes(x=current_polarization, 
+                                    fill = Group)) + 
+  geom_density(alpha = 0.5) + xlim(c(0, 1)) +
+  # add mean lines
+  geom_vline(data = post_means, aes(xintercept=grp.mean, 
+                                   color = Group), 
+             linetype="dashed", size=1) +
+  ggtitle("Distribution of Polarization Post-Experiment") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "Polarization of Facebook Posts (0-1)", 
+       y = "Density") +
+  # use consistent colors with other plots
+  scale_fill_manual(values=c("#F8766D", "#00BFC4"))
 
 
 
+### General tests -------
 
-# storage for working
-p <- ggplot(with_means, aes(x=week, y=week_mean))
-p + geom_ribbon(aes(ymin = week_mean-week_sd, ymax = week_mean+week_sd),
-            alpha=0.3,
-            fill="green") +
-  geom_line(aes(y=week_mean))
+model <- lm(current_polarization ~ memes_seen, 
+            data = during_experiment[during_experiment$group_assignment == 1,])
 
+model <- lm(current_polarization ~ memes_seen, 
+            data = during_experiment[during_experiment$group_assignment == 0,])
+
+
+summary(model)
+during_experiment$group_assignment
+
+colnames(during_experiment)
