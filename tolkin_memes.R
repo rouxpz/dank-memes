@@ -78,6 +78,11 @@ during_means <- ddply(during_experiment, "Group",
 post_means <- ddply(post_experiment, "Group",
                     summarise, grp.mean=mean(current_polarization))
 
+
+during_seen <- ddply(during_experiment, "Group", 
+                      summarise, grp.mean=mean(memes_seen))
+
+
 # pre-experiment density
 plot3 <- ggplot(pre_experiment, aes(x=current_polarization, 
                                     fill = Group)) + 
@@ -125,6 +130,26 @@ plot5 <- ggplot(post_experiment, aes(x=current_polarization,
   # use consistent colors with other plots
   scale_fill_manual(values=c("#F8766D", "#00BFC4"))
 
+
+# memes seen during the experiment.
+plot6 <- ggplot(during_experiment, aes(x=(memes_seen * 100), 
+                                       fill = Group)) + 
+  geom_density(alpha = 0.5) + xlim(c(0.25, 1.25)) +
+  # add mean lines
+  geom_vline(data = during_seen, aes(xintercept=grp.mean, 
+                                      color = Group), 
+             linetype="dashed", size=1) +
+  ggtitle("Memes Seen During Experiment") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "Percentage of Memes Seen Per Week", 
+       y = "Density") +
+  # use consistent colors with other plots
+  scale_fill_manual(values=c("#F8766D", "#00BFC4"))
+
+colnames(during_experiment)
+
+
+# Scatter plot of polarization vs. memes seen
 
 
 ### General tests -------
