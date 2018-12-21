@@ -1,6 +1,7 @@
 library(tidyverse)
 library(cowplot)
 library(reshape2)
+library(plyr)
 
 meme_data <- read.csv("meme_experiment_data.csv")
 meme_data[is.na(meme_data)] <- 0
@@ -36,6 +37,8 @@ partisanship_data <- combined_meme_data %>%
   summarise(N = n(),
             ave_polarity = mean(total_polarity))
 
+View(partisanship_data)
+
 ggplot(partisanship_data, aes(x = ideology)) +
   geom_bar(color = "#1c0f4c", fill = "#5e32ff", alpha = 0.4) +
   ggtitle("Distribution of Participant Declared Partisanship") +
@@ -49,8 +52,8 @@ ggplot(partisanship_data, aes(x = week, y = ave_polarity)) +
 ggplot(combined_meme_data, aes(x = total_polarity)) +
   geom_histogram(aes(y = ..density..), color = "black", fill = "white") +
   geom_density(color = "black", fill = "#199790", alpha = 0.4) +
-  ggtitle("Distribution of Total Polarities") +
-  xlab("Total Polarity") +
+  ggtitle("Distribution of Average Polarities") +
+  xlab("Average Polarity") +
   ylab("Density")
 
 ###DENSITY PLOTS BY TIME###
@@ -61,14 +64,21 @@ time_groups <- combined_meme_data %>%
 
 View(time_groups)
 
+grouped_time_groups <- time_groups %>%
+  group_by(group_assignment, time_label) %>%
+  summarise(N = n(),
+            ave_polarity = mean(total_polarity),
+            sd_polarity = sd(total_polarity))
+
+table(grouped_time_groups)
 time_groups$time_label <- factor(time_groups$time_label, levels = c("pre_experiment", "during_experiment", "post_experiment"), labels = c("Pre Treatment (Weeks 1-3)", "During Treatment (Weeks 4-15)", "Post Treatment (Weeks 16-19)"))
 
 ggplot(time_groups, aes(x = total_polarity, color = time_label, fill = time_label)) +
   geom_density(alpha = 0.4) +
-  ggtitle("Distribution of Total Polarities By Treatment Phase") +
+  ggtitle("Distribution of Average Polarities By Treatment Phase") +
   scale_color_manual("Treatment Phase", values = c("#a590f0", "#f0a590", "#90f0a5")) +
   scale_fill_manual("Treatment Phase", values = c("#a590f0", "#f0a590", "#90f0a5")) +
-  xlab("Total Polarity") +
+  xlab("Average Polarity") +
   ylab("Density") +
   labs(color = "Treatment Phase")
 
@@ -151,7 +161,7 @@ ggplot(grouped_averages, aes(x = week, y = ave_polarity)) +
   ggtitle("Average Post Polarity of Participants By Group") +
   xlab("Week of Measurement") +
   ylab("Average Polarity") +
-  labs(fill = "Group Assignment", caption = "The dotted lines represent the demarcation between phases of treatment. \nThe ribbon represents the 95% confidence interval for both results.")
+  labs(fill = "Group Assignment", caption = "The dotted lines represent the demarcation between phases of treatment. \nTreatment was administered between weeks 4 and 15, with a pre-treatment \nphase occuring in weeks 1-3 and a post-treatment phase in weeks 16-19.\nThe ribbon represents the 95% confidence interval for both results.")
 
 ###AGE AND POLARITY###
 combined_dank_age_data <- combined_meme_data %>%
@@ -262,7 +272,7 @@ memes_seen_data <- combined_meme_data %>%
   mutate(memes_seen = memes_seen * 100) %>%
   filter(memes_seen > 0) %>%
   group_by(subjects, group_assignment) %>%
-  filter(group_assignment == 1) %>%
+  filter(group_assignment == 0) %>%
   summarise(N = n(), ave_memes_seen = mean(memes_seen), ave_polarity = mean(total_polarity))
   #filter(subjects < 50)
   #filter(week == 4) %>%
@@ -271,9 +281,9 @@ View(memes_seen_data)
 
 ggplot(memes_seen_data, aes(x = ave_memes_seen, y = ave_polarity)) +
   geom_point(color = "#467ae1", alpha = 0.5) +
-  geom_smooth(method = "lm", se = TRUE, color = "#e15f46") +
+  geom_smooth(method = "lm", se = TRUE, color = "#e76a94") +
   xlim(50, 100) +
-  ylim(0.5, 1.0) +
-  labs(title = 'Average Post Polarity Per Average Memes Seen: "Dank" Group') +
+  #ylim(0.5, 1.0) +
+  labs(title = 'Average Post Polarity Per Memes Seen: "Dank" Group', caption = 'The average post polarity per average percentage of memes seen for the "dank" group.\nThe pink line is the regression line between the two variables.') +
   xlab("Average Percentage of Memes Seen") +
   ylab("Average Post Polarity")
